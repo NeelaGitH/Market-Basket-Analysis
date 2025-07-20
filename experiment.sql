@@ -182,3 +182,57 @@ WHERE ITEMDESCRIPTION IN (SELECT * FROM errordata);
 select distinct itemdescription
 from staging4;
 
+-- adding country column for better filtering
+select t1.transactionId, t1.itemdescription, t2.country
+from staging4 t1
+join transactions t2
+on t1.TransactionId = t2.transactionId;
+
+create table staging5
+(transactionId int,
+itemdescription varchar(100),
+country varchar(100)
+);
+
+-- since the datasets are large, we are going to insert it in batches of 10000
+-- we will use stored procedure to automate the process
+
+select count(*) from staging4; 
+-- no. of rows: 528207
+-- 528207/2 = 264103
+
+drop procedure if exists insertdata1;
+DELIMITER $$
+CREATE procedure INSERTDATA1()
+BEGIN
+	DECLARE offset_val INT DEFAULT 0;
+    DECLARE total_rows INT DEFAULT 200000;
+    
+    WHILE offset_val < total_rows DO
+		insert into staging5(TransactionID, ItemDescription, Country)
+		select distinct t1.transactionId, t1.itemdescription, t2.country
+		from staging4 t1
+		join transactions t2
+		on t1.TransactionId = t2.transactionId
+        and t1.ItemDescription = t2.ItemDescription
+		limit 10000 OFFSET offset_val;
+		
+		set offset_val = offset_val + 10000;
+	
+    END WHILE;
+END $$
+DELIMITER ;
+
+CALL INSERTDATA1();
+
+select count(*) from staging5;
+
+
+
+    
+
+
+
+
+
+
