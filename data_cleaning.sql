@@ -111,6 +111,96 @@ modify column TransactionTime datetime;
 
 -- cleaned data phew!!
 
+select distinct itemcode, itemdescription from trans_staging_2;
+
+delete from trans_staging_2
+where ItemCode = 42;
+
+alter table trans_staging_2
+rename column costperltem to costperitem;
+
+SELECT itemcode, COUNT(DISTINCT ItemDescription) AS desc_count
+FROM trans_staging_2
+GROUP BY itemcode
+HAVING desc_count > 1;
+
+select * from trans_staging_2
+where itemcode = 1894200;
+
+select itemdescription, costperitem, country, row_number() over(partition by ItemDescription) from trans_staging_2;
+-- costperitem col is ambiguous even across countries
+
+select userId, count(distinct country) as count_coun
+from trans_staging_2 
+group by userId
+having count_coun > 1; 
+-- userid and country combination is not unique
+
+select distinct country from trans_staging_2
+where userId = 260757;
+
+select max(transactiondate), min(transactiondate)
+from trans_staging_2;
+
+select distinct year(transactiontime)
+from trans_staging_2;
+
+select distinct TransactionId from trans_staging_2
+where year(TransactionTime) = 2028 ;
+
+select * from trans_staging_2
+where TransactionId = 5911917;
+
+delete from trans_staging_2
+where year(TransactionTime) = 2028;
+
+alter table trans_staging_2
+rename column TransactionTime to TransactionDate;
+
+-- adding a time column
+alter table trans_staging_2
+add TransactionTime TIME;
+
+update trans_staging_2
+set TransactionTime = time(transactionDate);
+
+select * from trans_staging_2;
+
+update trans_staging_2
+set transactionDate = date(transactionDate);
+
+alter table trans_staging_2
+modify column TransactionDate date;
+
+select distinct itemdescription
+from trans_staging_2;
+
+-- Creating Dimension Tables
+
+create table dim_Product
+(itemDescription varchar(100));
+
+update trans_staging_2
+set ItemDescription = trim(ItemDescription);
+
+insert into dim_Product
+select distinct itemdescription from trans_staging_2;
+
+create table dim_Customer
+(UserId int);
+
+insert into dim_Customer
+select distinct UserId from trans_staging_2;
+
+create table dim_Geography
+(Country varchar(100));
+
+insert into dim_Geography
+select distinct Country from trans_staging_2;
+
+
+
+
 
 
 
